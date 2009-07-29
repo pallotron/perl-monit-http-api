@@ -213,13 +213,13 @@ sub fetch_info {
             my $xml = new XML::Bare(text => $self->_get_xml);
             $self->{xml_hash} = $xml->parse();
         } else {
-            throw Error::Simple($res->status_line);
+            throw Error::Simple($@);
         }
     } 
     catch Error with {
         my $ex = shift;
         $ex->throw();
-    }
+    };
 }
 
 # returns an list of services
@@ -303,42 +303,36 @@ sub command_run {
         $command ne ACTION_MONITOR and
         $command ne ACTION_UNMONITOR ) {
 
-            $self->{is_success} = 0;
-            $self->{error_string} = "Don't understand this action!";
-            carp($self->{error_string});
-            return 0;
+            throw Error::Simple("Don't understand this action");
+            return;
     }
 
     if(not defined $service) {
         $self->{is_success} = 0;
         throw Error::Simple "Service not specified";
-        return 0;
+        return;
     }
 
     my $url = "http://" . $self->{hostname} . ":" . $self->{port} . "/" . $service;
 
     my $req = HTTP::Request->new(POST => $url);
+    push @{ $self->{ua}->requests_redirectable }, 'POST';
     $req->content_type('application/x-www-form-urlencoded');
     $req->content("action=$command");
 
     if (defined $self->{username} and defined $self->{password}) {
         $req->authorization_basic($self->{username},$self->{password});
     }
-    my $res = $self->{ua}->request($req);
-    eval {
-        if ($res->is_success) {
-            $self->{is_success} = 1;
-            # parse output content?
-            return 1;
-        } else {
-            die $res->status_line;
+    try {
+        my $res = $self->{ua}->request($req);
+        if (! $res->is_success) {
+            throw Error::Simple($res->status_line);
         }
-    } or do {
-        $self->{is_success} = 0;
-        $self->{error_string} = $@;
-        carp($self->{error_string});
-        return 0;
-    }
+    } 
+    catch Error with {
+        my $ex = shift;
+        $ex->throw();
+    };
 }
 
 =head1 AUTHOR

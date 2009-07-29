@@ -5,12 +5,17 @@ use FindBin;
 use lib "$FindBin::RealBin/lib"; 
 
 use Monit::HTTP::API ':constants';
+
+my $hd = new Monit::HTTP::API(hostname => 'linutop', username => 'admin', password => 'monit', use_auth => 1);
+
+my @s;
+eval {
+    @s = $hd->get_services(TYPE_PROCESS);
+} or do {
+    print $@;
+};
 use Data::Dumper;
-
-my $hd = new Monit::HTTP::API(username => 'admin', password => 'monit', use_auth => 1);
-
-my @s = $hd->get_services(TYPE_PROCESS);
-print Dumper @s;
-#$hd->command_run($s[0], "monitor");
+print Dumper(@s);
+$hd->command_run($s[0], "start");
 
 
