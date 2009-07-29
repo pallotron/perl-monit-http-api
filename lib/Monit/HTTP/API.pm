@@ -1,5 +1,11 @@
 package Monit::HTTP::API;
 
+=head1 NAME
+
+Monit::HTTP::API - The great new Monit::HTTP::API!
+
+=cut
+
 use LWP::UserAgent;
 use XML::Bare;
 use Carp qw(croak carp);
@@ -7,7 +13,6 @@ use Carp qw(croak carp);
 use warnings;
 use strict;
 
-# HOST, FILESYSTEM, FILE
 use constant {
     TYPE_FILESYSTEM => 0,
     TYPE_DIRECTORY  => 1,
@@ -59,9 +64,6 @@ our %EXPORT_TAGS = ( constants => [
     'ACTION_UNMONITOR',
     ]);
 
-=head1 NAME
-
-Monit::HTTP::API - The great new Monit::HTTP::API!
 
 =head1 VERSION
 
@@ -71,34 +73,75 @@ Version 0.01
 
 our $VERSION = '0.01';
 
-
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
+This module exposes an interface to talk with Monit via its HTTP interface.
+You can use it to get the status of all the monitored services on that particular
+host such as CPU and Memory usage, current PID, parent PID, current running status, 
+current monitoring status and so on.
+The module can be used also for performing actions like:
 
-Perhaps a little code snippet.
+=over
 
-    use Monit::HTTP::API;
+=item * Start/Stop/Restart services
 
-    my $foo = Monit::HTTP::API->new();
-    ...
+=item * Monitor/Unmonitor services
 
-=head1 EXPORT
+    use Monit::HTTP::API ':constants';
 
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
+    my $hd = new Monit::HTTP::API(
+            hostname => '127.0.0.1',
+            port     => '2812',
+            use_auth => 1,
+            username => 'admin', 
+            password => 'monit',
+            );
 
-=head1 METHODS / FUNCTIONS
+    my @processes = $hd->get_services(TYPE_PROCESS);
+    $hd->command_run($processes[0], ACTION_STOP);
+    my $service_status_href = $hd->service_status($processes[0]);
 
-=head2 $deploy = new Monit::HTTP::API (
-        hostname => $hostname, 
-        port => $port,
-        username => $username,
-        password => $password,
-        use_auth => 1|0
-    )
+=back
 
-Create a new Monit::HTTP::API object.
+=head1 EXPORTED CONSTANTS
+
+This module exports a set of constants:
+
+    TYPE_FILESYSTEM
+    TYPE_DIRECTORY
+    TYPE_FILE
+    TYPE_PROCESS
+    TYPE_HOST
+    TYPE_SYSTEM
+    TYPE_FIFO
+
+    ACTION_STOP
+    ACTION_START
+    ACTION_RESTART
+    ACTION_MONITOR
+    ACTION_UNMONITOR
+
+They are meant to be used as arguments of the methods.
+
+=head1 METHODS
+
+=head2 C<$monit = new Monit::HTTP::API (...)>
+
+Constructor.
+Create a new C<Monit::HTTP::API> object.
+This constructor can be called passing a list of various parameters:
+
+    my $monit = new Monit::HTTP::API (
+                    hostname => localhost,
+                    port => 2812,
+                    use_auth => 1,
+                    username => admin,
+                    password => monit );
+
+The values showed above are the default values in case no argument
+is passed to the constructor.
+If use_auth is equal to 1 (true) and username and password are not null the http 
+request will be peformed using those usernames and password (basic http auth).
 
 =cut
 
@@ -120,8 +163,6 @@ sub new {
         $self->{username} ||= "admin";
         $self->{password} ||= "monit";
     }
-
-    $self->fetch_info;
 
     return $self;
 }
@@ -146,13 +187,19 @@ sub set_password {
     $self->{password} = $password;
 }
 
+=head2 C<$res = Monit::HTTP::API->fetch_info()>
+
+Called bye C<Monit::HTTP::API->get_services()>
+
+=cut
+
 # connect via http get the status info
 # this method also build an hash with all the info
 sub fetch_info {
     my ($self) = @_;
 
     $self->{ua} = LWP::UserAgent->new;
-    $self->{ua}->agent("Monit::HTTP::API/0.01");
+    $self->{ua}->agent("Perl Monit::HTTP::API/$VERSION");
 
     my $req = HTTP::Request->new(GET => $self->{status_url});
     if (defined $self->{username} and defined $self->{password} and $self->{use_auth}) {
@@ -198,6 +245,9 @@ sub get_services {
     }
 
     $self->fetch_info;
+    if(not $self->{is_success}) {
+        return undef;
+    }
 
     foreach my $s (@{$self->{xml_hash}->{monit}->{service}}) {
         if (($type ne "all" and $s->{type}->{value} == $type) or ($type eq "all")) {
@@ -225,6 +275,9 @@ sub service_status {
     my $status_href = {};
 
     $self->fetch_info;
+    if(not $self->{is_success}) {
+        return undef;
+    }
 
     foreach my $s (@{$self->{xml_hash}->{monit}->{service}}) {
         if ($s->{name}->{value} eq $service) {
