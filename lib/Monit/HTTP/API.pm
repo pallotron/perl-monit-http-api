@@ -8,7 +8,7 @@ Monit::HTTP::API - The great new Monit::HTTP::API!
 
 use LWP::UserAgent;
 use XML::Bare;
-use Carp qw(croak carp);
+use Error qw(:try);
 
 use warnings;
 use strict;
@@ -205,21 +205,20 @@ sub fetch_info {
     if (defined $self->{username} and defined $self->{password} and $self->{use_auth}) {
         $req->authorization_basic($self->{username},$self->{password});
     }
-    my $res = $self->{ua}->request($req);
-    eval {
+
+    try {
+        my $res = $self->{ua}->request($req);
         if ($res->is_success) {
-            $self->{is_success} = 1;
             $self->_set_xml($res->content);
             my $xml = new XML::Bare(text => $self->_get_xml);
             $self->{xml_hash} = $xml->parse();
-            return 1;
         } else {
-            die $res->status_line;
+            throw Error::Simple($res->status_line);
         }
-    } or do {
-        $self->{is_success} = 0;
-        $self->{error_string} = $@;
-        return 0;
+    } 
+    catch Error with {
+        my $ex = shift;
+        $ex->throw();
     }
 }
 
@@ -238,16 +237,11 @@ sub get_services {
         $type != TYPE_FIFO and
         $type != TYPE_STATUS) {
 
-            $self->{is_success} = 0;
-            $self->{error_string} = "Don't understand this service type!";
-            carp($self->{error_string});
-            return 0;
+            throw Error::Simple("Don't understand this service type!");
+            return undef;
     }
 
     $self->fetch_info;
-    if(not $self->{is_success}) {
-        return undef;
-    }
 
     foreach my $s (@{$self->{xml_hash}->{monit}->{service}}) {
         if (($type ne "all" and $s->{type}->{value} == $type) or ($type eq "all")) {
@@ -275,9 +269,6 @@ sub service_status {
     my $status_href = {};
 
     $self->fetch_info;
-    if(not $self->{is_success}) {
-        return undef;
-    }
 
     foreach my $s (@{$self->{xml_hash}->{monit}->{service}}) {
         if ($s->{name}->{value} eq $service) {
@@ -320,8 +311,7 @@ sub command_run {
 
     if(not defined $service) {
         $self->{is_success} = 0;
-        $self->{error_string} = "Service not specified";
-        carp($self->{error_string});
+        throw Error::Simple "Service not specified";
         return 0;
     }
 
