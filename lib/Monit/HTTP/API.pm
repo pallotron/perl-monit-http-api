@@ -30,7 +30,7 @@ use constant {
     ACTION_UNMONITOR => 'unmonitor',
 };
 
-use Exporter 'import';
+use Exporter;
 
 our @EXPORT_OK = (
     'TYPE_FILESYSTEM',
@@ -63,6 +63,9 @@ our %EXPORT_TAGS = ( constants => [
     'ACTION_MONITOR',
     'ACTION_UNMONITOR',
     ]);
+
+our @ISA = qw(Exporter);
+our @EXPORT = qw(get_services command_run);
 
 
 =head1 VERSION
@@ -142,6 +145,8 @@ The values showed above are the default values in case no argument
 is passed to the constructor.
 If use_auth is equal to 1 (true) and username and password are not null the http 
 request will be peformed using those usernames and password (basic http auth).
+Be aware that if you provide username and password and you don't set
+use_auth to be 1 authentication won't work.
 
 =cut
 
@@ -167,35 +172,69 @@ sub new {
     return $self;
 }
 
+=head2 C<set_hostname($hostname)>
+
+Set the hostname of the monit instance
+
+=cut
+
 sub set_hostname {
     my ($self, $hostname) = @_;
     $self->{hostname} = $hostname;
 }
+
+=head2 C<set_port($port)>
+
+Set the tcp port of the monit instance
+
+=cut
 
 sub set_port {
     my ($self, $port) = @_;
     $self->{port} = $port;
 }
 
+=head2 C<set_username($username)>
+
+Set the username to be used in thee basic http authentication
+
+=cut
+
 sub set_username {
     my ($self, $username) = @_;
     $self->{username} = $username;
 }
+
+=head2 C<set_password($password)>
+
+Set the password to be used in thee basic http authentication
+
+=cut
 
 sub set_password {
     my ($self, $password ) = @_;
     $self->{password} = $password;
 }
 
-=head2 C<$res = Monit::HTTP::API->fetch_info()>
+=head2 C<$res = Monit::HTTP::API->_fetch_info()>
 
-Called bye C<Monit::HTTP::API->get_services()>
+Called bye C<Monit::HTTP::API->get_services()>.
+Does not need to be called by user. This is a private (internal) method
+This private function connects via http (GET) to the monit server.
+
+URL requested is http://<hostname>:<port>/_status?format=xml
+
+An XML file is returned and parsed using XML::Bare.
+
+The raw XML data is stored in the object using the _set_xml() method.
+The raw XML data can be retrieved using _get_xml.
+
+An hash reference of the XML data (as the one returned by the parse_xml function of
+XML::Bare) is stored in the object.
 
 =cut
 
-# connect via http get the status info
-# this method also build an hash with all the info
-sub fetch_info {
+sub _fetch_info {
     my ($self) = @_;
 
     $self->{ua} = LWP::UserAgent->new;
@@ -241,7 +280,7 @@ sub get_services {
             return undef;
     }
 
-    $self->fetch_info;
+    $self->_fetch_info;
 
     foreach my $s (@{$self->{xml_hash}->{monit}->{service}}) {
         if (($type ne "all" and $s->{type}->{value} == $type) or ($type eq "all")) {
@@ -268,7 +307,7 @@ sub service_status {
     my ($self, $service) = @_;
     my $status_href = {};
 
-    $self->fetch_info;
+    $self->_fetch_info;
 
     foreach my $s (@{$self->{xml_hash}->{monit}->{service}}) {
         if ($s->{name}->{value} eq $service) {

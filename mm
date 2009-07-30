@@ -14,6 +14,7 @@ eval {
 } or do {
     print $@;
 };
+$hd->fetch_info;
 use Data::Dumper;
 print Dumper(@s);
 $hd->command_run($s[0], "start");
