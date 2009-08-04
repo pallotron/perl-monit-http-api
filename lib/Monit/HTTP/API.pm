@@ -2,7 +2,7 @@ package Monit::HTTP::API;
 
 =head1 NAME
 
-Monit::HTTP::API - The great new Monit::HTTP::API!
+Monit::HTTP::API - an OOP interface to Monit.
 
 =cut
 
