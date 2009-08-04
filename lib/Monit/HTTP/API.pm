@@ -266,9 +266,11 @@ sub _fetch_info {
     };
 }
 
-=head2 C<$res = Monit::HTTP::API->_get_services()>
+=head2 C<$res = Monit::HTTP::API->get_services()>
 
 Return an array of services configured on the remote monit daemon.
+
+In case of any exepction an error is thrown and undef is returned.
 
 =cut
 
