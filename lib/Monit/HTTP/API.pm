@@ -177,7 +177,7 @@ sub new {
     return $self;
 }
 
-=head2 C<Monit::HTTP::API->set_hostname($hostname)>
+=head2 C<Monit::HTTP::API-E<gt>set_hostname($hostname)>
 
 Set the hostname of the monit instance
 
@@ -188,7 +188,7 @@ sub set_hostname {
     $self->{hostname} = $hostname;
 }
 
-=head2 C<Monit::HTTP::API->set_port($port)>
+=head2 C<Monit::HTTP::API-E<gt>set_port($port)>
 
 Set the tcp port of the monit instance
 
@@ -199,7 +199,7 @@ sub set_port {
     $self->{port} = $port;
 }
 
-=head2 C<Monit::HTTP::API->set_username($username)>
+=head2 C<Monit::HTTP::API-E<gt>set_username($username)>
 
 Set the username to be used in thee basic http authentication
 
@@ -210,7 +210,7 @@ sub set_username {
     $self->{username} = $username;
 }
 
-=head2 C<Monit::HTTP::API->set_password($password)>
+=head2 C<Monit::HTTP::API-E<gt>set_password($password)>
 
 Set the password to be used in thee basic http authentication
 
@@ -221,7 +221,7 @@ sub set_password {
     $self->{password} = $password;
 }
 
-=head2 C<$res = Monit::HTTP::API->_fetch_info()>
+=head2 C<$res = Monit::HTTP::API-E<gt>_fetch_info()>
 
 Called bye C<Monit::HTTP::API->get_services()>.
 Does not need to be called by user. This is a private (internal) method
@@ -266,7 +266,7 @@ sub _fetch_info {
     };
 }
 
-=head2 C<$res = Monit::HTTP::API->get_services()>
+=head2 C<$res = Monit::HTTP::API-E<gt>get_services()>
 
 Return an array of services configured on the remote monit daemon.
 
@@ -302,7 +302,7 @@ sub get_services {
     return @services;
 }
 
-=head2 C<$res = Monit::HTTP::API->_set_xml($xml)
+=head2 C<$res = Monit::HTTP::API-E<gt>_set_xml($xml)>
 
 Private method to set raw xml data.
 Called from C<Monit::HTTP::API->_fetch_info()>
@@ -314,7 +314,7 @@ sub _set_xml {
     $self->{status_raw_content} = $xml;
 }
 
-=head2 C<$res = Monit::HTTP::API->_get_xml($xml)
+=head2 C<$res = Monit::HTTP::API-E<gt>_get_xml($xml)>
 
 Private method to get raw xml data.
 Called from C<Monit::HTTP::API->_fetch_info()>
@@ -326,7 +326,8 @@ sub _get_xml {
     return $self->{status_raw_content};
 }
 
-=head2 C<$hashref_tree = Monit::HTTP::API->service_status($servicename)
+=head2 C<$hashref_tree =
+Monit::HTTP::API-E<gt>service_status($servicename)>
 
 Returns the status for a particular service in form of hash with all the info 
 for that service.
@@ -366,7 +367,8 @@ sub service_status {
     } else { return $status_href; }
 }
 
-=head2 C<$hashref_tree = Monit::HTTP::API->command_run($servicename, $command)
+=head2 C<$hashref_tree = Monit::HTTP::API-E<gt>command_run($servicename,
+$command)>
 
 Perform an action against a service.
 $command can be a constant (ACTION_STOP, ACTION_START, ACTION_RESTART, ACTION_MONITOR, ACTION_UNMONITOR)
