@@ -100,9 +100,14 @@ The module can be used also for performing actions like:
             password => 'monit',
             );
 
-    my @processes = $hd->get_services(TYPE_PROCESS);
-    $hd->command_run($processes[0], ACTION_STOP);
-    my $service_status_href = $hd->service_status($processes[0]);
+    eval {
+        my @processes = $hd->get_services(TYPE_PROCESS);
+        $hd->command_run($processes[0], ACTION_STOP);
+        my $service_status_href = $hd->service_status($processes[0]);
+    } or do {
+            print $@;
+    };
+
 
 =back
 
@@ -172,7 +177,7 @@ sub new {
     return $self;
 }
 
-=head2 C<set_hostname($hostname)>
+=head2 C<Monit::HTTP::API->set_hostname($hostname)>
 
 Set the hostname of the monit instance
 
@@ -183,7 +188,7 @@ sub set_hostname {
     $self->{hostname} = $hostname;
 }
 
-=head2 C<set_port($port)>
+=head2 C<Monit::HTTP::API->set_port($port)>
 
 Set the tcp port of the monit instance
 
@@ -194,7 +199,7 @@ sub set_port {
     $self->{port} = $port;
 }
 
-=head2 C<set_username($username)>
+=head2 C<Monit::HTTP::API->set_username($username)>
 
 Set the username to be used in thee basic http authentication
 
@@ -205,7 +210,7 @@ sub set_username {
     $self->{username} = $username;
 }
 
-=head2 C<set_password($password)>
+=head2 C<Monit::HTTP::API->set_password($password)>
 
 Set the password to be used in thee basic http authentication
 
@@ -261,11 +266,16 @@ sub _fetch_info {
     };
 }
 
-# returns an list of services
+=head2 C<$res = Monit::HTTP::API->_get_services()>
+
+Return an array of services configured on the remote monit daemon.
+
+=cut
+
 sub get_services {
     my ($self, $type) = @_;
     my @services;
-    $type ||= "all";
+    $type ||= "-1";
 
     if ($type != TYPE_FILESYSTEM and
         $type != TYPE_DIRECTORY and
@@ -283,26 +293,45 @@ sub get_services {
     $self->_fetch_info;
 
     foreach my $s (@{$self->{xml_hash}->{monit}->{service}}) {
-        if (($type ne "all" and $s->{type}->{value} == $type) or ($type eq "all")) {
+        if (($type != -1 and $s->{type}->{value} == $type) or ($type == -1)) {
             push @services,  $s->{name}->{value};
         }
     }
     return @services;
 }
 
+=head2 C<$res = Monit::HTTP::API->_set_xml($xml)
+
+Private method to set raw xml data.
+Called from C<Monit::HTTP::API->_fetch_info()>
+
+=cut
+
 sub _set_xml {
     my ($self, $xml) = @_;
     $self->{status_raw_content} = $xml;
 }
+
+=head2 C<$res = Monit::HTTP::API->_get_xml($xml)
+
+Private method to get raw xml data.
+Called from C<Monit::HTTP::API->_fetch_info()>
+
+=cut
 
 sub _get_xml {
     my ($self) = @_;
     return $self->{status_raw_content};
 }
 
+=head2 C<$hashref_tree = Monit::HTTP::API->service_status($servicename)
 
-# returns the status for a particular service
-# in form of hash with all the info for that service
+Returns the status for a particular service in form of hash with all the info 
+for that service.
+Return undef is the service does not exists.
+
+=cut
+
 sub service_status {
     my ($self, $service) = @_;
     my $status_href = {};
@@ -329,10 +358,21 @@ sub service_status {
         }
     }
 
-    return $status_href;
+    if (! scalar keys %$status_href) {
+        throw Error::Simple("Service $service does not exist");
+        return undef;
+    } else { return $status_href; }
 }
 
-# performs an action against a service
+=head2 C<$hashref_tree = Monit::HTTP::API->command_run($servicename, $command)
+
+Perform an action against a service.
+$command can be a constant (ACTION_STOP, ACTION_START, ACTION_RESTART, ACTION_MONITOR, ACTION_UNMONITOR)
+
+This method throws errors in case something goes wrong. Use eval { } statement to catch the error.
+
+=cut
+
 sub command_run {
     my ($self, $service, $command) = @_;
 
@@ -351,6 +391,8 @@ sub command_run {
         throw Error::Simple "Service not specified";
         return;
     }
+
+    # if services does not exist throw error
 
     my $url = "http://" . $self->{hostname} . ":" . $self->{port} . "/" . $service;
 
