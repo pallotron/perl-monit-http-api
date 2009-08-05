@@ -3,12 +3,17 @@
 use FindBin;
 # load modules from "lib" subdir relative to this script
 use lib "$FindBin::RealBin/lib"; 
+
 use Monit::HTTP::API ':constants';
+use Data::Dumper;
+use Getopt::Std;
+use YAML;
 
 my @hosts = ('all');
 my $non_human_output = 0;
 my $DEBUG = 0;
 my $cfg_file;
+my $service = 'all';
 
 sub dbg {
     my ($text) = @_;
@@ -22,7 +27,6 @@ sub usage {
 
 sub parse_opts {
 
-    use Getopt::Std;
     my (%opts, $error);
     getopts('ho:NDc:', \%opts) or $error = 1;
 
@@ -30,11 +34,19 @@ sub parse_opts {
     $non_human_output = 1 if defined $opts{'N'};
     $DEBUG = 1 if defined $opts{'D'};
     usage if $error or defined $opts{'h'};
+    $service = $ARGV[0] if defined $ARGV[0];  
+
+    print Dumper ;
+
+    dbg ("Config is as follow:\nhosts selected: ".join(",", @hosts)."\n".
+        "non_human_output: $non_human_output\n".
+        "DEBUG: $DEBUG\n".
+        "Service: $service\n"
+        );
 }
 
 sub read_cfg {
 
-    use YAML;
     my $file;
 
     if( -r $ENV{'HOME'}."/.mm.conf.yml") { $f = $ENV{'HOME'}."/.mm.conf.yml"; }
@@ -47,7 +59,6 @@ sub read_cfg {
     close TEST;
     my $cfg_file = Load($file);
     if($DEBUG) {
-        use Data::Dumper; 
         dbg ("\$cfg_file data dump is:\n".Dumper $cfg_file);
     }
 }
