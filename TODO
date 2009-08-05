@@ -1,1 +1,4 @@
-- Error handling
+- implementing mm
+  - config file parsing
+  - config file with YAML
+- implementing test units
