@@ -186,6 +186,8 @@ Set the hostname of the monit instance
 sub set_hostname {
     my ($self, $hostname) = @_;
     $self->{hostname} = $hostname;
+    $self->{status_url} = 
+        "http://".$self->{hostname}.":".$self->{port}."/_status?format=xml";
 }
 
 =head2 C<Monit::HTTP::API-E<gt>set_port($port)>
@@ -197,6 +199,8 @@ Set the tcp port of the monit instance
 sub set_port {
     my ($self, $port) = @_;
     $self->{port} = $port;
+    $self->{status_url} = 
+        "http://".$self->{hostname}.":".$self->{port}."/_status?format=xml";
 }
 
 =head2 C<Monit::HTTP::API-E<gt>set_username($username)>
@@ -252,6 +256,8 @@ sub _fetch_info {
 
     try {
         my $res = $self->{ua}->request($req);
+        use Data::Dumper;
+        print Dumper $res;
         if ($res->is_success) {
             $self->_set_xml($res->content);
             my $xml = new XML::Bare(text => $self->_get_xml);
@@ -286,7 +292,8 @@ sub get_services {
         $type != TYPE_HOST and
         $type != TYPE_SYSTEM and
         $type != TYPE_FIFO and
-        $type != TYPE_STATUS) {
+        $type != TYPE_STATUS and 
+        $type != -1 ) {
 
             throw Error::Simple("Don't understand this service type!");
             return undef;
