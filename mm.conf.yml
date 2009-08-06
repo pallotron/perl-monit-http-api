@@ -1,10 +1,8 @@
 ---
 hosts:
-    - host: localhost
+    - hostname: localhost
       port: 2812
-      username: admin
-      password: monit
-    - host: linutop
+    - hostname: linutop
       port: 2812
       username: admin
       password: monit
