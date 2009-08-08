@@ -1,8 +1,8 @@
-package Monit::HTTP::API;
+package Monit::HTTP;
 
 =head1 NAME
 
-Monit::HTTP::API - an OOP interface to Monit.
+Monit::HTTP - an OOP interface to Monit.
 
 =cut
 
@@ -90,9 +90,9 @@ The module can be used also for performing actions like:
 
 =item * Monitor/Unmonitor services
 
-    use Monit::HTTP::API ':constants';
+    use Monit::HTTP ':constants';
 
-    my $hd = new Monit::HTTP::API(
+    my $hd = new Monit::HTTP(
             hostname => '127.0.0.1',
             port     => '2812',
             use_auth => 1,
@@ -133,13 +133,13 @@ They are meant to be used as arguments of the methods.
 
 =head1 METHODS
 
-=head2 C<$monit = new Monit::HTTP::API (...)>
+=head2 C<$monit = new Monit::HTTP (...)>
 
 Constructor.
-Create a new C<Monit::HTTP::API> object.
+Create a new C<Monit::HTTP> object.
 This constructor can be called passing a list of various parameters:
 
-    my $monit = new Monit::HTTP::API (
+    my $monit = new Monit::HTTP (
                     hostname => localhost,
                     port => 2812,
                     use_auth => 1,
@@ -177,7 +177,7 @@ sub new {
     return $self;
 }
 
-=head2 C<Monit::HTTP::API-E<gt>set_hostname($hostname)>
+=head2 C<Monit::HTTP-E<gt>set_hostname($hostname)>
 
 Set the hostname of the monit instance
 
@@ -190,7 +190,7 @@ sub set_hostname {
         "http://".$self->{hostname}.":".$self->{port}."/_status?format=xml";
 }
 
-=head2 C<Monit::HTTP::API-E<gt>set_port($port)>
+=head2 C<Monit::HTTP-E<gt>set_port($port)>
 
 Set the tcp port of the monit instance
 
@@ -203,7 +203,7 @@ sub set_port {
         "http://".$self->{hostname}.":".$self->{port}."/_status?format=xml";
 }
 
-=head2 C<Monit::HTTP::API-E<gt>set_username($username)>
+=head2 C<Monit::HTTP-E<gt>set_username($username)>
 
 Set the username to be used in thee basic http authentication
 
@@ -214,7 +214,7 @@ sub set_username {
     $self->{username} = $username;
 }
 
-=head2 C<Monit::HTTP::API-E<gt>set_password($password)>
+=head2 C<Monit::HTTP-E<gt>set_password($password)>
 
 Set the password to be used in thee basic http authentication
 
@@ -225,9 +225,9 @@ sub set_password {
     $self->{password} = $password;
 }
 
-=head2 C<$res = Monit::HTTP::API-E<gt>_fetch_info()>
+=head2 C<$res = Monit::HTTP-E<gt>_fetch_info()>
 
-Called bye C<Monit::HTTP::API->get_services()>.
+Called bye C<Monit::HTTP->get_services()>.
 Does not need to be called by user. This is a private (internal) method
 This private function connects via http (GET) to the monit server.
 
@@ -247,7 +247,7 @@ sub _fetch_info {
     my ($self) = @_;
 
     $self->{ua} = LWP::UserAgent->new;
-    $self->{ua}->agent("Perl Monit::HTTP::API/$VERSION");
+    $self->{ua}->agent("Perl Monit::HTTP/$VERSION");
 
     my $req = HTTP::Request->new(GET => $self->{status_url});
     if (defined $self->{username} and defined $self->{password} and $self->{use_auth}) {
@@ -256,14 +256,14 @@ sub _fetch_info {
 
     try {
         my $res = $self->{ua}->request($req);
-        use Data::Dumper;
-        print Dumper $res;
         if ($res->is_success) {
             $self->_set_xml($res->content);
             my $xml = new XML::Bare(text => $self->_get_xml);
             $self->{xml_hash} = $xml->parse();
         } else {
-            throw Error::Simple($@);
+            my $err = "Error while connecting to ".
+                $self->{status_url}." !\nError details: $@";
+            throw Error::Simple($err);
         }
     } 
     catch Error with {
@@ -272,7 +272,7 @@ sub _fetch_info {
     };
 }
 
-=head2 C<$res = Monit::HTTP::API-E<gt>get_services()>
+=head2 C<$res = Monit::HTTP-E<gt>get_services()>
 
 Return an array of services configured on the remote monit daemon.
 
@@ -309,10 +309,10 @@ sub get_services {
     return @services;
 }
 
-=head2 C<$res = Monit::HTTP::API-E<gt>_set_xml($xml)>
+=head2 C<$res = Monit::HTTP-E<gt>_set_xml($xml)>
 
 Private method to set raw xml data.
-Called from C<Monit::HTTP::API->_fetch_info()>
+Called from C<Monit::HTTP->_fetch_info()>
 
 =cut
 
@@ -321,10 +321,10 @@ sub _set_xml {
     $self->{status_raw_content} = $xml;
 }
 
-=head2 C<$res = Monit::HTTP::API-E<gt>_get_xml($xml)>
+=head2 C<$res = Monit::HTTP-E<gt>_get_xml($xml)>
 
 Private method to get raw xml data.
-Called from C<Monit::HTTP::API->_fetch_info()>
+Called from C<Monit::HTTP->_fetch_info()>
 
 =cut
 
@@ -334,7 +334,7 @@ sub _get_xml {
 }
 
 =head2 C<$hashref_tree =
-Monit::HTTP::API-E<gt>service_status($servicename)>
+Monit::HTTP-E<gt>service_status($servicename)>
 
 Returns the status for a particular service in form of hash with all the info 
 for that service.
@@ -374,7 +374,7 @@ sub service_status {
     } else { return $status_href; }
 }
 
-=head2 C<$hashref_tree = Monit::HTTP::API-E<gt>command_run($servicename,
+=head2 C<$hashref_tree = Monit::HTTP-E<gt>command_run($servicename,
 $command)>
 
 Perform an action against a service.
@@ -441,7 +441,7 @@ automatically be notified of progress on your bug as I make changes.
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Monit::HTTP::API
+    perldoc Monit::HTTP
 
 
 You can also look for information at:
@@ -480,4 +480,4 @@ under the same terms as Perl itself.
 
 =cut
 
-1; # End of Monit::HTTP::API
+1; # End of Monit::HTTP
