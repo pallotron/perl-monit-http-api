@@ -4,7 +4,7 @@ use FindBin;
 # load modules from "lib" subdir relative to this script
 use lib "$FindBin::RealBin/lib"; 
 
-use Monit::HTTP::API ':constants';
+use Monit::HTTP ':constants';
 use Data::Dumper;
 use Getopt::Std;
 use YAML;
@@ -47,7 +47,7 @@ sub parse_opts {
     $command= $ARGV[0] if defined $ARGV[0];  
     $service = $ARGV[1] if defined $ARGV[1];  
 
-    print Dumper ;
+    
 
     dbg ("Config is as follow:\nhosts selected: ".join(",", @hosts)."\n".
         "non_human_output: $non_human_output\n".
@@ -77,6 +77,7 @@ sub read_cfg {
     if($DEBUG) {
         dbg ("\$cfg_file data dump is:\n".Dumper $cfg_file);
     }
+
 }
 # ----------------------------------------------------------------------------
 
@@ -86,39 +87,91 @@ sub read_cfg {
 parse_opts;
 read_cfg;
 
+# if the provided hosts are not in configuration files scream
+# against the user
+foreach my $h (@hosts) {
+    my $h2 = { map { $_->{hostname}=>1 } @{$cfg_file->{'hosts'}}};
+    if(not exists $h2->{$h} and $hosts[0] ne "all") {
+        print STDERR "Host \"$h\" doesn't exist in config file, skipping...\n";
+    }
+}
+
 # for each host...
 foreach my $i (@{$cfg_file->{'hosts'}}) {
 
+    # if the command is list just list this host and go to the next one
+    # without actually doing anything else
     if($command eq "list") {
         print "* $i->{hostname}\n";
         next;;
     }
 
-    my $auth;
-    # if password and username are not defined set $auth = 0
-    defined $i->{password} and defined $i->{username} ? $auth=1 : $auth=0 ;
+    # if host doesn't exist in config file and we are asking to perform
+    # an action across all host just skip silently to the next one
+    if( not exists { map { $_ => 1 } @hosts }->{$i->{hostname}} and
+        $hosts[0] ne "all") {
 
-    eval {
+        next;
 
-        # instanciate a Monit::HTTP:API object 
-        my $hd = new Monit::HTTP::API(
-                hostname => $i->{hostname},
-                port     => $i->{port},
-                username => $i->{username},
-                password => $i->{password},
-                use_auth => $auth,
-            );
+    # if the host we provided as argument of mm exists in mm.conf
+    # do the job
+    } else {
 
-        #TODO: execute command against the host if servicename exists on that host 
-        #      or if servicename is all
-        #TODO: get status and populate hashref tree
+        my $auth;
+        # if password and username are not defined set $auth = 0
+        defined $i->{password} and defined $i->{username} ? $auth=0 : $auth=1 ;
 
-    } or do {
+        my @services;
+        my $hd;
 
-        print STDERR $@;
-        exit -1;
+        eval {
 
-    };
+            # instanciate a Monit::HTTP:API object 
+            $hd = new Monit::HTTP(
+                    hostname => $i->{hostname},
+                    port     => $i->{port},
+                    username => $i->{username},
+                    password => $i->{password},
+                    use_auth => $auth,
+                );
+
+            # get list of all services
+
+            @services = $hd->get_services;
+
+        } or do {
+            
+            print STDERR $@;
+            print "Skipping to next host...\n";
+            next;
+
+        };
+
+        dbg (Dumper @services);
+
+        if( $command eq "start" or
+            $command eq "stop" or
+            $command eq "monitor" or
+            $command eq "unmonitor" ) {
+
+            #TODO: loop thru all services, if service is all print all
+            # otherwise print only if servicename is eq to the one
+            # provided
+
+            foreach my $s (@services) {
+                if($service eq "all" or $service eq $s) {
+                    $hd->command_run($s, $command);
+                }
+            }
+
+        } 
+        
+        if( $command eq "summary" or $command eq "status") {
+            #TODO: get status of that command  and populate hashref tree
+        }
+    }
+
+    
 }
 
 #TODO: print result navigating the status hashref tree
@@ -136,6 +189,7 @@ mm [options] [<command>] all|SERVICE..
     options:
         -h,              show this help message and exit
         -o HOST[,HOST]*  comma separated list of hosts (default: "all")
+                         provided hosts must be defined in the config file
         -N               output for non-humans
         -D,              debug output
         -c,              configuration file (default: ~/.mm.conf.yml)
