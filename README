@@ -1,4 +1,4 @@
-Monit-HTTP-API
+Monit-HTTP
 
 This module exposes an interface to talk with Monit via its HTTP
 interface.
@@ -20,21 +20,21 @@ SUPPORT AND DOCUMENTATION
 After installing, you can find documentation for this module with the
 perldoc command.
 
-    perldoc Monit::HTTP::API
+    perldoc Monit::HTTP
 
 You can also look for information at:
 
     RT, CPAN's request tracker
-        http://rt.cpan.org/NoAuth/Bugs.html?Dist=Monit-HTTP-API
+        http://rt.cpan.org/NoAuth/Bugs.html?Dist=Monit-HTTP
 
     AnnoCPAN, Annotated CPAN documentation
-        http://annocpan.org/dist/Monit-HTTP-API
+        http://annocpan.org/dist/Monit-HTTP
 
     CPAN Ratings
-        http://cpanratings.perl.org/d/Monit-HTTP-API
+        http://cpanratings.perl.org/d/Monit-HTTP
 
     Search CPAN
-        http://search.cpan.org/dist/Monit-HTTP-API
+        http://search.cpan.org/dist/Monit-HTTP
 
 
 COPYRIGHT AND LICENCE

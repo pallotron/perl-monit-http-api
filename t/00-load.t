@@ -3,7 +3,7 @@
 use Test::More tests => 1;
 
 BEGIN {
-	use_ok( 'Monit::HTTP::API' );
+	use_ok( 'Monit::HTTP' );
 }
 
-diag( "Testing Monit::HTTP::API $Monit::HTTP::API::VERSION, Perl $], $^X" );
+diag( "Testing Monit::HTTP $Monit::HTTP::VERSION, Perl $], $^X" );

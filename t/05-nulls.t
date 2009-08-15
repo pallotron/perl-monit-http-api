@@ -5,16 +5,16 @@ use strict;
 use warnings;
 use Test::More tests => 3;
 
-use Monit::HTTP::API ':constants';
+use Monit::HTTP ':constants';
 
-#my $hd = new Monit::HTTP::API(
+#my $hd = new Monit::HTTP(
 #    hostname => 'localhost', 
 #    port => 'port',
 #    username => 'admin', 
 #    password => 'monit', 
 #    use_auth => 1);
 
-my $hd = new Monit::HTTP::API(hostname=>'nonexistenthost');
+my $hd = new Monit::HTTP(hostname=>'nonexistenthost');
 eval {
     $hd->get_services();
 } or do {

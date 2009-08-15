@@ -351,6 +351,7 @@ sub service_status {
     foreach my $s (@{$self->{xml_hash}->{monit}->{service}}) {
         if ($s->{name}->{value} eq $service) {
             $status_href->{name} = $s->{name}->{value};
+            $status_href->{type} = $s->{type}->{value};
             $status_href->{status}  = $s->{status}->{value};
             $status_href->{pendingaction} = $s->{pendingaction}->{value};
             $status_href->{monitor} = $s->{monitor}->{value};
@@ -365,6 +366,10 @@ sub service_status {
             $status_href->{memory}->{percenttotal} = $s->{memory}->{percenttotal}->{value};
             $status_href->{cpu}->{percent} = $s->{cpu}->{percent}->{value};
             $status_href->{cpu}->{percenttotal} = $s->{cpu}->{percenttotal}->{value};
+            $status_href->{host} = $self->{hostname};
+            $status_href->{load}->{avg01} = $s->{load}->{avg01}->{value};
+            $status_href->{load}->{avg05} = $s->{load}->{avg05}->{value};
+            $status_href->{load}->{avg15} = $s->{load}->{avg15}->{value};
         }
     }
 

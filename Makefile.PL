@@ -7,8 +7,8 @@ WriteMakefile(
     AUTHOR              => 'Angelo "pallotron" Failla <pallotron@freaknet.org>',
     VERSION_FROM        => 'lib/Monit/HTTP.pm',
     ABSTRACT_FROM       => 'lib/Monit/HTTP.pm',
-    EXE_FILES           => [qw(mm)],
-    PL_FILES            => {},
+    EXE_FILES           => [qw( mm )],
+    PL_FILES            => { },
     PREREQ_PM => {
         'LWP::UserAgent' => 0, 
         'HTTP::Request' => 0,
