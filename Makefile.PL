@@ -13,6 +13,7 @@ WriteMakefile(
         'LWP::UserAgent' => 0, 
         'HTTP::Request' => 0,
         'Test::More' => 0,
+        'Test::MockModule' => 0,
         'XML::Bare' => 0,
         'YAML' => 0,
         'Error' => 0,
