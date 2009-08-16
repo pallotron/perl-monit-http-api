@@ -339,6 +339,7 @@ Monit::HTTP-E<gt>service_status($servicename)>
 Returns the status for a particular service in form of hash with all the info 
 for that service.
 Return undef is the service does not exists.
+To know the structure of the hash ref use Data::Dumper :D
 
 =cut
 
@@ -379,8 +380,7 @@ sub service_status {
     } else { return $status_href; }
 }
 
-=head2 C<$hashref_tree = Monit::HTTP-E<gt>command_run($servicename,
-$command)>
+=head2 C<Monit::HTTP-E<gt>command_run($servicename, $command)>
 
 Perform an action against a service.
 $command can be a constant (ACTION_STOP, ACTION_START, ACTION_RESTART, ACTION_MONITOR, ACTION_UNMONITOR)

@@ -101,19 +101,15 @@ sub humanize_uptime{
     if ($non_human_output) {
         return $t;
     }
-
     if($sec < 60) {
         return sprintf "%ds", $sec;
     }
-
     if($sec < 3600) {
         return sprintf "%dm", $sec/60;
     }
-
     if($sec < 24*60*60) {
         return sprintf "%dh %dm", ($sec / 3600), (($sec%3600)/60);
     }
-
 }
 # ----------------------------------------------------------------------------
 
@@ -125,15 +121,12 @@ sub humanize_kb {
     if ($non_human_output) {
         return $kb;
     }
-
     if($kb < 1024) {
         return sprintf "%d kB", $kb;
     }
-
     if($kb < 1024*1024) {
         return sprintf "%.2g MB", $kb/1024;
     }
-
     if($kb < 1024*1024*1024) {
         return sprintf "%.2g GB", $kb/1024/1024;
     }
@@ -143,9 +136,11 @@ sub humanize_kb {
 # ----------------------------------------------------------------------------
 # Print the status of the services in @status array
 sub print_status {
+    if (scalar @status > 0) {
     printf "%-10s %-10s %-5s %-10s %7s %9s %5s %5s\n", 
         'HOST', 'SERVICE', 'TYPE', 'STATUS', 'UPTIME', 'MEMORY', 'PMEM',
         'CPU(%)';
+    } else { return; }
     foreach my $s (@status) {
         dbg (Dumper $s);
         printf "%-10s %-10s %-5s %-10s %7s %9s %5s %5s\n",
@@ -171,6 +166,7 @@ our $cfg_file;
 our $service = 'all';
 our $command = 'status';
 our @status;
+my $found = 0;
 
 parse_opts;
 read_cfg;
@@ -293,13 +289,34 @@ mm [options] [<command>] all|SERVICE..
 
 =head1 DESCRIPTION
 
+C<mm> is a CLI tool to talk with a bunch of monit daemons in your network.
+The monit daemon currently implements a HTTP web interface that the
+user can use to manage the monit daemon currently running on that
+particular host.
+however, if you have a bunch of server out there on your network, and
+you want to manage all of them you are forced to connect to different
+URLs (one per server).
+I came up with this mm tool (mm stays for monit managemenent). You can
+use this command to perform actions across your monit instances.
+All you need to do i setting up your mm.conf.yml file with the hostnames
+and access account.
+
+Enjoy!
+
 =head1 SEE ALSO
+
+The monit project home page
 
 =head1 AUTHOR
 
 Angelo "pallotron" Failla - pallotron at freaknet.org
 
 =head1 COPYRIGHT
+
+Copyright 2009 Angelo "pallotron" Failla, all rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 =cut
 
