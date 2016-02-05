@@ -2,7 +2,7 @@
 
 use FindBin;
 # load modules from "lib" subdir relative to this script
-use lib "$FindBin::RealBin/lib"; 
+use lib "$FindBin::RealBin/lib";
 
 use Monit::HTTP ':constants';
 use Data::Dumper;
@@ -37,10 +37,10 @@ sub parse_opts {
     $non_human_output = 1 if defined $opts{'N'};
     $DEBUG = 1 if defined $opts{'D'};
     usage if $error or defined $opts{'h'};
-    $command= $ARGV[0] if defined $ARGV[0];  
-    $service = $ARGV[1] if defined $ARGV[1];  
+    $command= $ARGV[0] if defined $ARGV[0];
+    $service = $ARGV[1] if defined $ARGV[1];
 
-    
+
 
     dbg ("Config is as follow:\nhosts selected: ".join(",", @hosts)."\n".
         "non_human_output: $non_human_output\n".
@@ -59,9 +59,9 @@ sub read_cfg {
 
     if( -r $ENV{'HOME'}."/.mm.conf.yml") { $f = $ENV{'HOME'}."/.mm.conf.yml"; }
     elsif( -r "/etc/mm.conf.yml") { $f = "/etc/mm.conf.yml"; }
-    elsif( -r "$FindBin::RealBin/mm.conf.yml") 
+    elsif( -r "$FindBin::RealBin/mm.conf.yml")
         { $f = "$FindBin::RealBin/mm.conf.yml"; }
-    
+
     open (TEST, $f);
     $file .= $_ while(<TEST>);
     dbg "Config file is:\n$file";
@@ -78,8 +78,8 @@ sub read_cfg {
 # Convert type constant to string
 sub typetostr {
     my $t = shift;
-   
-    use Switch; 
+
+    use Switch;
     switch($t) {
         case TYPE_FILESYSTEM { return "fs" }
         case TYPE_DIRECTORY { return "dir" }
@@ -137,7 +137,7 @@ sub humanize_kb {
 # Print the status of the services in @status array
 sub print_status {
     if (scalar @status > 0) {
-    printf "%-10s %-10s %-5s %-10s %7s %9s %5s %5s\n", 
+    printf "%-10s %-10s %-5s %-10s %7s %9s %5s %5s\n",
         'HOST', 'SERVICE', 'TYPE', 'STATUS', 'UPTIME', 'MEMORY', 'PMEM',
         'CPU(%)';
     } else { return; }
@@ -150,7 +150,7 @@ sub print_status {
             $s->{status}, #convert status to string
             humanize_uptime($s->{uptime}), #convert uptime to human readable figure
             humanize_kb($s->{memory}->{kilobyte}), # humanize kilobytes
-            $s->{memory}->{percent}."%", 
+            $s->{memory}->{percent}."%",
             $s->{cpu}->{percent} || "N/A";
     }
 }
@@ -210,7 +210,7 @@ foreach my $i (@{$cfg_file->{'hosts'}}) {
 
         eval {
 
-            # instanciate a Monit::HTTP:API object 
+            # instanciate a Monit::HTTP:API object
             $hd = new Monit::HTTP(
                     hostname => $i->{hostname},
                     port     => $i->{port},
@@ -224,7 +224,7 @@ foreach my $i (@{$cfg_file->{'hosts'}}) {
             @services = $hd->get_services;
 
         } or do {
-            
+
             print STDERR $@;
             print STDERR "Skipping to next host...\n";
             next;
