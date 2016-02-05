@@ -10,8 +10,7 @@ WriteMakefile(
     EXE_FILES           => [qw( mm )],
     PL_FILES            => { },
     PREREQ_PM => {
-        'LWP::UserAgent' => 0, 
-        'HTTP::Request' => 0,
+        'HTTP::Tiny' => 0, 
         'Test::More' => 0,
         'Test::MockModule' => 0,
         'XML::Bare' => 0,

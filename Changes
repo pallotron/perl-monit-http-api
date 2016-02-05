@@ -1,4 +1,6 @@
 Revision history for Monit::HTTP
+0.02    05 February 2016
+        Convert from LWP to HTTP::Tiny
 
 0.01    15 August 2009
         First version, released on an unsuspecting world.
