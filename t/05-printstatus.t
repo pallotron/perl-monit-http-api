@@ -67,28 +67,28 @@ my $xml = q{<?xml version="1.0" encoding="ISO-8859-1"?>
 eval {
 
     my $lwp = Test::MockModule->new( 'LWP::UserAgent' );
-    $lwp->mock( request => 
+    $lwp->mock( request =>
         sub {
             # Return a hand crafted HTTP::Response object
             my $response = HTTP::Response->new;
             $response->code(200);
             $response->content($xml);
-            return $response; }  
+            return $response; }
         );
-    my $hd = new Monit::HTTP();
+    my $hd = Monit::HTTP->new();
     my @services = $hd->get_services;
 
     is($hd->_get_xml, $xml);
 
-    is($services[0], "ushare");
-    is($services[1], "localhost");
+    is($services[0], 'ushare');
+    is($services[1], 'localhost');
 
     my $status = $hd->service_status($services[0]);
-    is($status->{name}, "ushare");
-    is($status->{host}, "localhost");
+    is($status->{name}, 'ushare');
+    is($status->{host}, 'localhost');
 
     $status = $hd->service_status($services[1]);
-    is($status->{name}, "localhost");
-    is($status->{host}, "localhost");
-} or do { print $@};
+    is($status->{name}, 'localhost');
+    is($status->{host}, 'localhost');
+} or do { print $@ };
 

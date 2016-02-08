@@ -18,7 +18,7 @@ Monit::HTTP - an OOP interface to Monit.
 =cut
 
 use HTTP::Tiny;
-use XML::Bare;
+use XML::Fast;
 use Error qw(:try);
 
 use constant {
@@ -251,13 +251,13 @@ This private function connects via http (GET) to the monit server.
 
 URL requested is http://<hostname>:<port>/_status?format=xml
 
-An XML file is returned and parsed using L<XML::Bare>.
+An XML file is returned and parsed using L<XML::Fast>.
 
 The raw XML data is stored in the object using the L</_set_xml> method.
 The raw XML data can be retrieved using L</_get_xml>.
 
-An hash reference of the XML data (as the one returned by the L<parse_xml|XML::Bare/parse_xml> function of
-L<XML::Bare>) is stored in the object.
+An hash reference of the XML data (as the one returned by the L<parse_xml|XML::Fast/parse_xml> function of
+L<XML::Fast>) is stored in the object.
 
 =cut
 
@@ -268,8 +268,7 @@ sub _fetch_info {
         my $res = $self->{ua}->get( $self->{status_url} );
         if ($res->{success}) {
             $self->_set_xml($res->{content});
-            my $xml = XML::Bare->new(text => $self->_get_xml);
-            $self->{xml_hash} = $xml->parse();
+            $self->{xml_hash} = xml2hash( $self->_get_xml );
         }
         else {
             my $err = 'Error while connecting to '.

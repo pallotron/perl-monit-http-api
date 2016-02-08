@@ -10,10 +10,10 @@ WriteMakefile(
     EXE_FILES           => [qw( mm )],
     PL_FILES            => { },
     PREREQ_PM => {
-        'HTTP::Tiny' => 0, 
+        'HTTP::Tiny' => 0,
         'Test::More' => 0,
         'Test::MockModule' => 0,
-        'XML::Bare' => 0,
+        'XML::Fast' => 0,
         'YAML' => 0,
         'Error' => 0,
         'Test::Pod::Coverage' => 1.08,

@@ -8,13 +8,13 @@ use Test::More tests => 3;
 use Monit::HTTP ':constants';
 
 #my $hd = new Monit::HTTP(
-#    hostname => 'localhost', 
+#    hostname => 'localhost',
 #    port => 'port',
-#    username => 'admin', 
-#    password => 'monit', 
+#    username => 'admin',
+#    password => 'monit',
 #    use_auth => 1);
 
-my $hd = new Monit::HTTP(hostname=>'nonexistenthost');
+my $hd = Monit::HTTP->new(hostname=>'nonexistenthost');
 eval {
     $hd->get_services();
 } or do {

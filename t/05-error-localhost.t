@@ -8,7 +8,7 @@ use Test::More tests => 1;
 use Monit::HTTP ':constants';
 
 eval {
-    my $hd = new Monit::HTTP();
+    my $hd = Monit::HTTP->new();
     $hd->get_services;
 } or do {
     like $@, qr{Error while connecting}
