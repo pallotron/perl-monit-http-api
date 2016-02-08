@@ -89,6 +89,7 @@ The module can be used also for performing actions like:
 =item * Monitor/Unmonitor services
 
     use Monit::HTTP ':constants';
+    use Try::Tiny; # or your favourite
 
     my $hd = Monit::HTTP->new(
             hostname => '127.0.0.1',
@@ -98,13 +99,13 @@ The module can be used also for performing actions like:
             password => 'monit',
             );
 
-    eval {
+    try {
         my @processes = $hd->get_services(TYPE_PROCESS);
         $hd->command_run($processes[0], ACTION_STOP);
         my $service_status_href = $hd->service_status($processes[0]);
     }
-    or do {
-        print $@;
+    catch {
+        print "caught error: $_"
     };
 
 
@@ -269,8 +270,9 @@ sub _fetch_info {
         $self->{xml_hash} = xml2hash( $self->_get_xml );
     }
     else {
-        die 'Error while connecting to '.
-            $self->{status_url}." !\nError details: $res->{status} $res->{reason}\n";
+        die sprintf "Error while connecting to %s !\n" .
+            "Status: %s\nReason: %s\nContent: %s\n",
+        $self->{status_url}, $res->{status}, $res->{reason}, $res->{content} || 'NIL';
     }
 
     return 1
@@ -305,8 +307,8 @@ sub get_services {
     $self->_fetch_info;
 
     for my $s (@{$self->{xml_hash}->{monit}->{service}}) {
-        if (($type != -1 and $s->{type}->{value} == $type) or ($type == -1)) {
-            push @services,  $s->{name}->{value};
+        if (($type != -1 and $s->{type} == $type) or ($type == -1)) {
+            push @services,  $s->{name};
         }
     }
     return @services;
@@ -352,27 +354,27 @@ sub service_status {
     $self->_fetch_info;
 
     foreach my $s (@{$self->{xml_hash}->{monit}->{service}}) {
-        if ($s->{name}->{value} eq $service) {
-            $status_href->{name} = $s->{name}->{value};
-            $status_href->{type} = $s->{type}->{value};
-            $status_href->{status}  = $s->{status}->{value};
-            $status_href->{pendingaction} = $s->{pendingaction}->{value};
-            $status_href->{monitor} = $s->{monitor}->{value};
-            $status_href->{group} = $s->{group}->{value};
-            $status_href->{pid} = $s->{pid}->{value};
-            $status_href->{ppid} = $s->{ppid}->{value};
-            $status_href->{uptime} = $s->{uptime}->{value};
-            $status_href->{children} = $s->{children}->{value};
-            $status_href->{memory}->{kilobyte} = $s->{memory}->{kilobyte}->{value};
-            $status_href->{memory}->{kilobytetotal} = $s->{memory}->{kilobytetotal}->{value};
-            $status_href->{memory}->{percent} = $s->{memory}->{percent}->{value};
-            $status_href->{memory}->{percenttotal} = $s->{memory}->{percenttotal}->{value};
-            $status_href->{cpu}->{percent} = $s->{cpu}->{percent}->{value};
-            $status_href->{cpu}->{percenttotal} = $s->{cpu}->{percenttotal}->{value};
+        if ($s->{name} eq $service) {
+            $status_href->{name} = $s->{name};
+            $status_href->{type} = $s->{type};
+            $status_href->{status}  = $s->{status};
+            $status_href->{pendingaction} = $s->{pendingaction};
+            $status_href->{monitor} = $s->{monitor};
+            $status_href->{group} = $s->{group};
+            $status_href->{pid} = $s->{pid};
+            $status_href->{ppid} = $s->{ppid};
+            $status_href->{uptime} = $s->{uptime};
+            $status_href->{children} = $s->{children};
+            $status_href->{memory}->{kilobyte} = $s->{memory}->{kilobyte};
+            $status_href->{memory}->{kilobytetotal} = $s->{memory}->{kilobytetotal};
+            $status_href->{memory}->{percent} = $s->{memory}->{percent};
+            $status_href->{memory}->{percenttotal} = $s->{memory}->{percenttotal};
+            $status_href->{cpu}->{percent} = $s->{cpu}->{percent};
+            $status_href->{cpu}->{percenttotal} = $s->{cpu}->{percenttotal};
             $status_href->{host} = $self->{hostname};
-            $status_href->{load}->{avg01} = $s->{load}->{avg01}->{value};
-            $status_href->{load}->{avg05} = $s->{load}->{avg05}->{value};
-            $status_href->{load}->{avg15} = $s->{load}->{avg15}->{value};
+            $status_href->{load}->{avg01} = $s->{load}->{avg01};
+            $status_href->{load}->{avg05} = $s->{load}->{avg05};
+            $status_href->{load}->{avg15} = $s->{load}->{avg15};
         }
     }
 
