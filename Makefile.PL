@@ -11,10 +11,13 @@ WriteMakefile(
     PL_FILES            => { },
     PREREQ_PM => {
         'HTTP::Tiny' => 0,
-        'Test::More' => 0,
-        'Test::MockModule' => 0,
         'XML::Fast' => 0,
         'YAML' => 0,
+    },
+    BUILD_REQUIRES => {
+        'Test::More' => 0,
+        'Test::MockModule' => 0,
+        'Test::Trap' => 0,
         'Test::Pod::Coverage' => 1.08,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
