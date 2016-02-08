@@ -1,9 +1,9 @@
 #!perl -T
 
-use lib 'lib';
 use strict;
 use warnings;
 use Test::More tests => 3;
+use Test::Trap qw/ :on_fail(diag_all) /;
 
 use Monit::HTTP ':constants';
 
@@ -15,26 +15,19 @@ use Monit::HTTP ':constants';
 #    use_auth => 1);
 
 my $hd = Monit::HTTP->new(hostname=>'nonexistenthost');
-eval {
-    $hd->get_services();
-} or do {
-    like $@, qr{Bad hostname 'nonexistenthost'};
-};
+{
+my @r = trap { $hd->get_services() };
+like( $trap->die, qr{Error while connecting to}, 'Die on none-existent host' );
+}
 
 $hd->set_hostname('localhost');
-eval {
-    $hd->get_services();
-} or do {
-    print $@;
-    like $@, qr{connect: Connection refused};
-};
+{
+my @r = trap { $hd->get_services() };
+like( $trap->die, qr{Error while connecting to}, 'Die on localhost' );
+}
 
 $hd->set_port(14566);
-eval {
-    $hd->get_services();
-} or do {
-    print $@;
-    like $@, qr{connect: Connection refused};
-};
-
-
+{
+my @r = trap { $hd->get_services() };
+like( $trap->die, qr{Error while connecting to}, 'Die on localhost with alt port' );
+}
