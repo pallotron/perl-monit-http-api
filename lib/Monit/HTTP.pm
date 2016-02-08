@@ -19,7 +19,6 @@ Monit::HTTP - an OOP interface to Monit.
 
 use HTTP::Tiny;
 use XML::Fast;
-use Error qw(:try);
 
 use constant {
     TYPE_FILESYSTEM => 0,
@@ -264,22 +263,17 @@ L<XML::Fast>) is stored in the object.
 sub _fetch_info {
     my ($self) = @_;
 
-    try {
-        my $res = $self->{ua}->get( $self->{status_url} );
-        if ($res->{success}) {
-            $self->_set_xml($res->{content});
-            $self->{xml_hash} = xml2hash( $self->_get_xml );
-        }
-        else {
-            my $err = 'Error while connecting to '.
-                $self->{status_url}." !\nError details: $res->{status} $res->{reason}";
-            throw Error::Simple($err);
-        }
+    my $res = $self->{ua}->get( $self->{status_url} );
+    if ($res->{success}) {
+        $self->_set_xml($res->{content});
+        $self->{xml_hash} = xml2hash( $self->_get_xml );
     }
-    catch Error with {
-        my $ex = shift;
-        $ex->throw();
-    };
+    else {
+        die 'Error while connecting to '.
+            $self->{status_url}." !\nError details: $res->{status} $res->{reason}\n";
+    }
+
+    return 1
 }
 
 =head2 C<$res = $monit-E<gt>get_services()>
@@ -305,13 +299,12 @@ sub get_services {
         $type != TYPE_STATUS and
         $type != -1 ) {
 
-            throw Error::Simple('Don\'t understand this service type!');
-            return undef;
+            die "Don't understand this service type!\n";
     }
 
     $self->_fetch_info;
 
-    foreach my $s (@{$self->{xml_hash}->{monit}->{service}}) {
+    for my $s (@{$self->{xml_hash}->{monit}->{service}}) {
         if (($type != -1 and $s->{type}->{value} == $type) or ($type == -1)) {
             push @services,  $s->{name}->{value};
         }
@@ -383,11 +376,11 @@ sub service_status {
         }
     }
 
-    if (! scalar keys %$status_href) {
-        throw Error::Simple("Service $service does not exist");
-        return
-    }
-    else { return $status_href }
+    die "Service $service does not exist\n"
+        unless scalar keys %$status_href;
+
+    return $status_href
+
 }
 
 =head2 C<$monit-E<gt>command_run($servicename, $command)>
@@ -408,30 +401,23 @@ sub command_run {
         $command ne ACTION_MONITOR and
         $command ne ACTION_UNMONITOR ) {
 
-            throw Error::Simple('Don\'t understand this action');
-            return
+            die "Don't understand this action\n";
     }
 
     if(not defined $service) {
         $self->{is_success} = 0;
-        throw Error::Simple 'Service not specified';
-        return
+        die "Service not specified\n";
     }
 
     # if services does not exist throw error
 
     my $url = 'http://'.$self->{hostname}.':'.$self->{port}.'/'.$service;
 
-    try {
-        my $res = $self->{ua}->post_form($url, { action => $command });
-        if (! $res->{success}) {
-            throw Error::Simple($res->{status});
-        }
-    }
-    catch Error with {
-        my $ex = shift;
-        $ex->throw();
-    };
+    my $res = $self->{ua}->post_form($url, { action => $command });
+    die $res->{status}
+        unless $res->{success};
+
+    return 1
 }
 
 =head1 AUTHOR

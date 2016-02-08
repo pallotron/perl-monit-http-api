@@ -15,7 +15,6 @@ WriteMakefile(
         'Test::MockModule' => 0,
         'XML::Fast' => 0,
         'YAML' => 0,
-        'Error' => 0,
         'Test::Pod::Coverage' => 1.08,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
