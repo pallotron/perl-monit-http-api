@@ -20,22 +20,30 @@ Monit::HTTP - an OOP interface to Monit.
 use HTTP::Tiny;
 use XML::Fast;
 
-use constant {
-    TYPE_FILESYSTEM => 0,
-    TYPE_DIRECTORY  => 1,
-    TYPE_FILE       => 2,
-    TYPE_PROCESS    => 3,
-    TYPE_HOST       => 4,
-    TYPE_SYSTEM     => 5,
-    TYPE_FIFO       => 6,
-    TYPE_STATUS     => 7,
-
-    ACTION_STOP      => 'stop',
-    ACTION_START     => 'start',
-    ACTION_RESTART   => 'restart',
-    ACTION_MONITOR   => 'monitor',
-    ACTION_UNMONITOR => 'unmonitor',
+use constant MONIT_TYPES => {
+    0 => 'TYPE_FILESYSTEM',
+    1 => 'TYPE_DIRECTORY',
+    2 => 'TYPE_FILE',
+    3 => 'TYPE_PROCESS',
+    4 => 'TYPE_HOST',
+    5 => 'TYPE_SYSTEM',
+    6 => 'TYPE_FIFO',
+    7 => 'TYPE_STATUS',
 };
+
+use constant MONIT_ACTIONS => {
+    'stop'      => 'ACTION_STOP',
+    'start'     => 'ACTION_START',
+    'restart'   => 'ACTION_RESTART',
+    'monitor'   => 'ACTION_MONITOR',
+    'unmonitor' => 'ACTION_UNMONITOR',
+};
+
+# perl 5.10 has strange issues just going:
+#   use constant reverse %{ MONIT_TYPES() }
+# So work around it with do {}
+use constant do { my %foo = reverse( %{ MONIT_TYPES() } ); \%foo };
+use constant do { my %foo = reverse( %{ MONIT_ACTIONS() } ); \%foo };
 
 use Exporter;
 
@@ -315,23 +323,13 @@ sub get_services {
     my @services;
     $type ||= '-1';
 
-    if ($type != TYPE_FILESYSTEM and
-        $type != TYPE_DIRECTORY and
-        $type != TYPE_FILE and
-        $type != TYPE_PROCESS and
-        $type != TYPE_HOST and
-        $type != TYPE_SYSTEM and
-        $type != TYPE_FIFO and
-        $type != TYPE_STATUS and
-        $type != -1 ) {
-
-            die "Don't understand this service type!\n";
-    }
+    die "Don't understand this service type!\n"
+        unless $type == -1 or grep {$_ == $type} keys %{MONIT_TYPES()};
 
     $self->_fetch_info;
 
     for my $s (@{$self->{xml_hash}->{monit}->{service}}) {
-        if (($type != -1 and $s->{type} == $type) or ($type == -1)) {
+        if ($type == -1 or $s->{'-type'} == $type) {
             push @services,  $s->{name};
         }
     }
@@ -382,7 +380,7 @@ sub service_status {
 
             $status_href->{host} = $self->{hostname};
 
-            $status_href->{'type'} = $s->{'-type'}
+            $status_href->{'type'} = MONIT_TYPES->{ $s->{'-type'} } || $s->{'-type'}
                 if exists $s->{'-type'};
 
             for my $thing (qw/
@@ -454,14 +452,8 @@ This method throws errors in case something goes wrong. Use eval { } statement t
 sub command_run {
     my ($self, $service, $command) = @_;
 
-    if ($command ne ACTION_STOP and
-        $command ne ACTION_START and
-        $command ne ACTION_RESTART and
-        $command ne ACTION_MONITOR and
-        $command ne ACTION_UNMONITOR ) {
-
-            die "Don't understand this action\n";
-    }
+    die "Don't understand this action\n"
+        unless grep { $command eq $_ } keys %{MONIT_ACTIONS()};
 
     if(not defined $service) {
         $self->{is_success} = 0;
