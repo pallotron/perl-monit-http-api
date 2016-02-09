@@ -22,7 +22,8 @@ sub not_in_file_ok {
     if (%violated) {
         fail("$filename contains boilerplate text");
         diag "$_ appears on lines @{$violated{$_}}" for keys %violated;
-    } else {
+    }
+    else {
         pass("$filename contains no boilerplate text");
     }
 }

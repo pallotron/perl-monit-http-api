@@ -1,10 +1,11 @@
+#!perl
 
-use lib 'lib';
 use strict;
 use warnings;
 
-use Test::More qw(no_plan);
+use Test::More tests => 8;
 use Test::MockModule;
+use Test::Trap qw/ :on_fail(diag_all) /;
 use Monit::HTTP ':constants';
 
 my $xml = q{<?xml version="1.0" encoding="ISO-8859-1"?>
@@ -64,31 +65,34 @@ my $xml = q{<?xml version="1.0" encoding="ISO-8859-1"?>
 </monit>
 };
 
-eval {
+my $http = Test::MockModule->new( 'HTTP::Tiny' );
+$http->mock( get =>
+    sub {
+         return { success => 1, content => $xml }
+    }
+);
+my $hd = Monit::HTTP->new();
 
-    my $lwp = Test::MockModule->new( 'LWP::UserAgent' );
-    $lwp->mock( request => 
-        sub {
-            # Return a hand crafted HTTP::Response object
-            my $response = HTTP::Response->new;
-            $response->code(200);
-            $response->content($xml);
-            return $response; }  
-        );
-    my $hd = new Monit::HTTP();
-    my @services = $hd->get_services;
+my @services = trap {
+    $hd->get_services;
+};
+is( $trap->die, undef, 'get_services musnt die' );
 
-    is($hd->_get_xml, $xml);
+SKIP: {
+    skip 7, 'Monit object didnt provide services' unless @services;
 
-    is($services[0], "ushare");
-    is($services[1], "localhost");
+    is($hd->_get_xml, $xml,'Internal XML should match what we fed it');
+
+    is($services[0], 'ushare', 'should be: ushare');
+    is($services[1], 'localhost', 'should be: localhost');
 
     my $status = $hd->service_status($services[0]);
-    is($status->{name}, "ushare");
-    is($status->{host}, "localhost");
+    is($status->{name}, 'ushare','should be: ushare');
+    is($status->{host}, 'localhost','should be: localhost');
 
     $status = $hd->service_status($services[1]);
-    is($status->{name}, "localhost");
-    is($status->{host}, "localhost");
-} or do { print $@};
+    is($status->{name}, 'localhost', 'should be: localhost');
+    is($status->{host}, 'localhost', 'should be: localhost');
+
+};
 
