@@ -5,7 +5,7 @@ use strict;
 
 package Monit::HTTP;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =pod
 
@@ -76,11 +76,32 @@ our @EXPORT = qw(get_services command_run);
 
 =head1 SYNOPSIS
 
+ use Monit::HTTP;
+
+ # Use defaults to authenticate
+ my $monit = Monit::HTTP->new( use_auth => 1 );
+
+ # Or specify what you need (defaults displayed)
+ my $monit = Monit::HTTP->new(
+            hostname => '127.0.0.1',
+            port     => '2812',
+            use_auth => 0,
+            username => 'admin',
+            password => 'monit',
+            );
+
+ # list processes
+ my @processes = $hd->get_services();
+
+=head1 DESCRIPTION
+
 This module exposes an interface to talk with Monit via its HTTP interface.
 You can use it to get the status of all the monitored services on that particular
 host such as CPU and Memory usage, current PID, parent PID, current running status,
 current monitoring status and so on.
 The module can be used also for performing actions like:
+
+=head1 COMMON USE CASES
 
 =over
 
@@ -92,11 +113,7 @@ The module can be used also for performing actions like:
     use Try::Tiny; # or your favourite
 
     my $hd = Monit::HTTP->new(
-            hostname => '127.0.0.1',
-            port     => '2812',
             use_auth => 1,
-            username => 'admin',
-            password => 'monit',
             );
 
     try {
@@ -112,6 +129,10 @@ The module can be used also for performing actions like:
 =back
 
 =head1 EXPORTED CONSTANTS
+
+When brought in with:
+
+ use Monit::HTTP ':constants';
 
 This module exports a set of constants:
 
@@ -129,29 +150,31 @@ This module exports a set of constants:
     ACTION_MONITOR
     ACTION_UNMONITOR
 
-They are meant to be used as arguments of the methods.
+Use them as arguments for methods.
 
 =head1 METHODS
 
 =head2 C<$monit = Monit::HTTP-E<gt>new(...)>
 
-Constructor.
-Create a new C<Monit::HTTP> object.
+Constructor method, which creates a new C<Monit::HTTP> object.
+
 This constructor can be called passing a list of various parameters:
 
     my $monit = Monit::HTTP->new(
-                    hostname => localhost,
-                    port => 2812,
-                    use_auth => 1,
-                    username => admin,
-                    password => monit );
+                    hostname => 'localhost',
+                    port     => 2812,
+                    use_auth => 0,
+                    username => 'admin',
+                    password => 'monit'
+        );
 
-The values showed above are the default values in case no argument
+B<FYI> The values above are the default values in case no argument
 is passed to the constructor.
-If use_auth is equal to 1 (true) and username and password are not null the http
+
+If I<use_auth> is equal to 1 (true) and username and password are not null the http
 request will be peformed using those usernames and password (basic http auth).
 Be aware that if you provide username and password and you don't set
-use_auth to be 1 authentication won't work.
+I<use_auth> to be 1 authentication won't work.
 
 =cut
 
@@ -246,6 +269,7 @@ sub set_password {
 =head2 C<$res = $monit-E<gt>_fetch_info()>
 
 Called by L</get_services>.
+
 Does not need to be called by user. This is a private (internal) method
 This private function connects via http (GET) to the monit server.
 
