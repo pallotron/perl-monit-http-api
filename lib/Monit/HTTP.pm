@@ -377,28 +377,61 @@ sub service_status {
 
     $self->_fetch_info;
 
-    foreach my $s (@{$self->{xml_hash}->{monit}->{service}}) {
+    for my $s (@{$self->{xml_hash}->{monit}->{service}}) {
         if ($s->{name} eq $service) {
-            $status_href->{name} = $s->{name};
-            $status_href->{type} = $s->{type};
-            $status_href->{status}  = $s->{status};
-            $status_href->{pendingaction} = $s->{pendingaction};
-            $status_href->{monitor} = $s->{monitor};
-            $status_href->{group} = $s->{group};
-            $status_href->{pid} = $s->{pid};
-            $status_href->{ppid} = $s->{ppid};
-            $status_href->{uptime} = $s->{uptime};
-            $status_href->{children} = $s->{children};
-            $status_href->{memory}->{kilobyte} = $s->{memory}->{kilobyte};
-            $status_href->{memory}->{kilobytetotal} = $s->{memory}->{kilobytetotal};
-            $status_href->{memory}->{percent} = $s->{memory}->{percent};
-            $status_href->{memory}->{percenttotal} = $s->{memory}->{percenttotal};
-            $status_href->{cpu}->{percent} = $s->{cpu}->{percent};
-            $status_href->{cpu}->{percenttotal} = $s->{cpu}->{percenttotal};
+
             $status_href->{host} = $self->{hostname};
-            $status_href->{load}->{avg01} = $s->{load}->{avg01};
-            $status_href->{load}->{avg05} = $s->{load}->{avg05};
-            $status_href->{load}->{avg15} = $s->{load}->{avg15};
+
+            $status_href->{'type'} = $s->{'-type'}
+                if exists $s->{'-type'};
+
+            for my $thing (qw/
+                    children
+                    collected_sec
+                    collected_usec
+                    euid
+                    gid
+                    group
+                    monitor
+                    monitormode
+                    pid
+                    ppid
+                    name
+                    pendingaction
+                    status
+                    status_hint
+                    uid
+                    uptime
+                    /) {
+
+                $status_href->{$thing} = $s->{$thing}
+                    if exists $s->{$thing};
+
+            } # main stuff loop
+
+            # the 'system' (type 5) service sticks these things in to ->{system}, others are top level
+            if (my $sys = $s->{system} || $s) {
+                for my $thing (qw/ kilobyte kilobytetotal percent percenttotal /) {
+                    $status_href->{memory}->{$thing} = $sys->{memory}->{$thing}
+                        if exists $sys->{memory}->{$thing};
+                } # memory loop
+
+                for my $thing (qw/ kilobyte percent /) {
+                    $status_href->{swap}->{$thing} = $sys->{swap}->{$thing}
+                        if exists $sys->{swap}->{$thing};
+                } # swap loop
+
+                for my $thing (qw/ percent percenttotal /) {
+                    $status_href->{cpu}->{$thing} = $sys->{cpu}->{$thing}
+                        if exists $sys->{cpu}->{$thing};
+                } # cpu loop
+
+                for my $thing (qw/ avg01 avg05 avg15 /) {
+                    $status_href->{load}->{$thing} = $sys->{load}->{$thing}
+                        if exists $sys->{load}->{$thing};
+                } # load loop
+
+            }
         }
     }
 
