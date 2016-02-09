@@ -39,6 +39,19 @@ use constant MONIT_ACTIONS => {
     'unmonitor' => 'ACTION_UNMONITOR',
 };
 
+use constant MONIT_MONITOR => {
+    0 => 'off',
+    1 => 'monitored',
+    2 => 'initializing',
+};
+
+use constant MONIT_STATUS => {
+    0   => 'Running',
+    32  => 'Connection Failed',
+    512 => 'Does not exist',
+
+};
+
 # perl 5.10 has strange issues just going:
 #   use constant reverse %{ MONIT_TYPES() }
 # So work around it with do {}
@@ -61,6 +74,11 @@ our @EXPORT_OK = (
     'ACTION_RESTART',
     'ACTION_MONITOR',
     'ACTION_UNMONITOR',
+
+    'MONIT_ACTIONS',
+    'MONIT_MONITOR',
+    'MONIT_STATUS',
+    'MONIT_TYPES',
     );
 
 our %EXPORT_TAGS = ( constants => [
@@ -80,7 +98,6 @@ our %EXPORT_TAGS = ( constants => [
     ]);
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw(get_services command_run);
 
 =head1 SYNOPSIS
 
