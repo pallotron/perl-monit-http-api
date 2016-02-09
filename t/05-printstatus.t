@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 8;
+use Test::More tests => 6;
 use Test::MockModule;
 use Test::Trap qw/ :on_fail(diag_all) /;
 use Monit::HTTP ':constants';
@@ -65,10 +65,10 @@ my $xml = q{<?xml version="1.0" encoding="ISO-8859-1"?>
 </monit>
 };
 
-my $http = Test::MockModule->new( 'HTTP::Tiny' );
-$http->mock( get =>
-    sub {
-         return { success => 1, content => $xml }
+my $http = Test::MockModule->new('HTTP::Tiny');
+$http->mock(
+    get => sub {
+        return { success => 1, content => $xml };
     }
 );
 my $hd = Monit::HTTP->new();
@@ -79,20 +79,63 @@ my @services = trap {
 is( $trap->die, undef, 'get_services musnt die' );
 
 SKIP: {
-    skip 7, 'Monit object didnt provide services' unless @services;
+    skip 5, 'Monit object didnt provide services' unless @services;
 
-    is($hd->_get_xml, $xml,'Internal XML should match what we fed it');
+    is( $hd->_get_xml, $xml, 'Internal XML should match what we fed it' );
 
-    is($services[0], 'ushare', 'should be: ushare');
-    is($services[1], 'localhost', 'should be: localhost');
+    is( $services[0], 'ushare',    'should be: ushare' );
+    is( $services[1], 'localhost', 'should be: localhost' );
 
-    my $status = $hd->service_status($services[0]);
-    is($status->{name}, 'ushare','should be: ushare');
-    is($status->{host}, 'localhost','should be: localhost');
+    my $status = $hd->service_status( $services[0] );
+    is_deeply(
+        $status,
+        {
+            'pid'      => '6513',
+            'children' => '0',
+            'ppid'     => '1',
+            'host'     => 'localhost',
+            'cpu'      => {
+                'percent'      => '1.8',
+                'percenttotal' => '1.8'
+            },
+            'group'   => '',
+            'monitor' => '1',
+            'uptime'  => '2204',
+            'status'  => '0',
+            'name'    => 'ushare',
+            'type'    => '3',
+            'memory'  => {
+                'percenttotal'  => '1.0',
+                'kilobyte'      => '4892',
+                'percent'       => '1.0',
+                'kilobytetotal' => '4892'
+            }
+        },
+        "$services[0] status is correct"
+    );
 
-    $status = $hd->service_status($services[1]);
-    is($status->{name}, 'localhost', 'should be: localhost');
-    is($status->{host}, 'localhost', 'should be: localhost');
+    $status = $hd->service_status( $services[1] );
+    is_deeply(
+        $status,
+        {
+            'monitor' => '1',
+            'type'    => '5',
+            'host'    => 'localhost',
+            'group'   => '',
+            'name'    => 'localhost',
+            'load'    => {
+                'avg01' => '0.04',
+                'avg05' => '0.01',
+                'avg15' => '0.00'
+            },
+            'status' => '0',
+            'memory' => {
+                'percent'  => '9.5',
+                'kilobyte' => '46052'
+            }
+        },
+        "$services[1] status is correct"
+    );
 
-};
+}
 

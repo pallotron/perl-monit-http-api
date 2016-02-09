@@ -20,7 +20,43 @@ Monit::HTTP - an OOP interface to Monit.
 use HTTP::Tiny;
 use XML::Fast;
 
-use constant MONIT_TYPES => {
+our (
+    %MONIT_ACTIONS,
+    %MONIT_ACTIONS_REV,
+    %MONIT_STATUS,
+    %MONIT_STATUS_REV,
+    %MONIT_TYPES,
+    %MONIT_TYPES_REV,
+    %MONIT_MONITOR,
+    %MONIT_MONITOR_REV,
+);
+
+BEGIN {
+
+%MONIT_ACTIONS_REV = (
+    'stop'      => 'ACTION_STOP',
+    'start'     => 'ACTION_START',
+    'restart'   => 'ACTION_RESTART',
+    'monitor'   => 'ACTION_MONITOR',
+    'unmonitor' => 'ACTION_UNMONITOR',
+);
+%MONIT_ACTIONS = reverse %MONIT_ACTIONS_REV;
+
+%MONIT_MONITOR_REV = (
+    0 => 'off',
+    1 => 'monitored',
+    2 => 'initializing',
+);
+%MONIT_MONITOR = reverse %MONIT_MONITOR_REV;
+
+%MONIT_STATUS_REV = (
+    0   => 'Running',
+    32  => 'Connection Failed',
+    512 => 'Does not exist',
+);
+%MONIT_STATUS = reverse %MONIT_STATUS_REV;
+
+%MONIT_TYPES_REV = (
     0 => 'TYPE_FILESYSTEM',
     1 => 'TYPE_DIRECTORY',
     2 => 'TYPE_FILE',
@@ -29,73 +65,51 @@ use constant MONIT_TYPES => {
     5 => 'TYPE_SYSTEM',
     6 => 'TYPE_FIFO',
     7 => 'TYPE_STATUS',
-};
-
-use constant MONIT_ACTIONS => {
-    'stop'      => 'ACTION_STOP',
-    'start'     => 'ACTION_START',
-    'restart'   => 'ACTION_RESTART',
-    'monitor'   => 'ACTION_MONITOR',
-    'unmonitor' => 'ACTION_UNMONITOR',
-};
-
-use constant MONIT_MONITOR => {
-    0 => 'off',
-    1 => 'monitored',
-    2 => 'initializing',
-};
-
-use constant MONIT_STATUS => {
-    0   => 'Running',
-    32  => 'Connection Failed',
-    512 => 'Does not exist',
-
-};
+);
+%MONIT_TYPES = reverse %MONIT_TYPES_REV;
+}
 
 # perl 5.10 has strange issues just going:
 #   use constant reverse %{ MONIT_TYPES() }
 # So work around it with do {}
-use constant do { my %foo = reverse( %{ MONIT_TYPES() } ); \%foo };
-use constant do { my %foo = reverse( %{ MONIT_ACTIONS() } ); \%foo };
+use constant do { my %foo = reverse( %MONIT_TYPES_REV ); \%foo };
+use constant do { my %foo = reverse( %MONIT_ACTIONS_REV ); \%foo };
 
 use Exporter;
 
+our %EXPORT_TAGS = (
+    constants => [qw/
+        ACTION_MONITOR
+        ACTION_RESTART
+        ACTION_START
+        ACTION_STOP
+        ACTION_UNMONITOR
+
+        TYPE_DIRECTORY
+        TYPE_FIFO
+        TYPE_FILE
+        TYPE_FILESYSTEM
+        TYPE_HOST
+        TYPE_PROCESS
+        TYPE_SYSTEM
+    /],
+
+    hashes => [qw/
+        %MONIT_ACTIONS
+        %MONIT_ACTIONS_REV
+        %MONIT_STATUS
+        %MONIT_STATUS_REV
+        %MONIT_TYPES
+        %MONIT_TYPES_REV
+        %MONIT_MONITOR
+        %MONIT_MONITOR_REV
+    /],
+);
+
 our @EXPORT_OK = (
-    'TYPE_FILESYSTEM',
-    'TYPE_DIRECTORY',
-    'TYPE_FILE',
-    'TYPE_PROCESS',
-    'TYPE_HOST',
-    'TYPE_SYSTEM',
-    'TYPE_FIFO',
-
-    'ACTION_STOP',
-    'ACTION_START',
-    'ACTION_RESTART',
-    'ACTION_MONITOR',
-    'ACTION_UNMONITOR',
-
-    'MONIT_ACTIONS',
-    'MONIT_MONITOR',
-    'MONIT_STATUS',
-    'MONIT_TYPES',
-    );
-
-our %EXPORT_TAGS = ( constants => [
-    'TYPE_FILESYSTEM',
-    'TYPE_DIRECTORY',
-    'TYPE_FILE',
-    'TYPE_PROCESS',
-    'TYPE_HOST',
-    'TYPE_SYSTEM',
-    'TYPE_FIFO',
-
-    'ACTION_STOP',
-    'ACTION_START',
-    'ACTION_RESTART',
-    'ACTION_MONITOR',
-    'ACTION_UNMONITOR',
-    ]);
+    @{$EXPORT_TAGS{constants}},
+    @{$EXPORT_TAGS{hashes}},
+);
 
 our @ISA = qw(Exporter);
 
@@ -397,7 +411,7 @@ sub service_status {
 
             $status_href->{host} = $self->{hostname};
 
-            $status_href->{'type'} = MONIT_TYPES->{ $s->{'-type'} } || $s->{'-type'}
+            $status_href->{'type'} = $s->{'-type'}
                 if exists $s->{'-type'};
 
             for my $thing (qw/
