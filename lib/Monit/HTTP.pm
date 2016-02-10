@@ -146,6 +146,8 @@ The module can be used also for performing actions like:
 
 =item * Start/Stop/Restart services
 
+Send a PR with an example!
+
 =item * Monitor/Unmonitor services
 
     use Monit::HTTP ':constants';
@@ -171,25 +173,95 @@ The module can be used also for performing actions like:
 
 When brought in with:
 
+ use Monit::HTTP ':hashes';
+
+This module will export these variables:
+
+=over 4
+
+=item %MONIT_ACTIONS
+
+Contains the following keys with corresponding codes:
+
+ ACTION_MONITOR
+ ACTION_RESTART
+ ACTION_START
+ ACTION_STOP
+ ACTION_UNMONITOR
+
+=item %MONIT_ACTIONS_REV
+
+As per I<%MONIT_ACTIONS> but with keys and values reversed.
+
+=item %MONIT_STATUS
+
+Contains possible service status's with corresponding codes.
+
+Probably I<%MONIT_STATUS_REV> is more useful to you.
+
+=item %MONIT_STATUS_REV
+
+As per I<%MONIT_STATUS> but with keys and values reversed.
+
+Look up human readable status from its code using the status code.
+
+=item %MONIT_TYPES
+
+Contains the following keys with corresponding codes.
+
+ TYPE_DIRECTORY
+ TYPE_FIFO
+ TYPE_FILE
+ TYPE_FILESYSTEM
+ TYPE_HOST
+ TYPE_PROCESS
+ TYPE_SYSTEM
+
+Use this hash when requesting certain service types
+
+=item %MONIT_TYPES_REV
+
+As per I<%MONIT_TYPES> but with keys and values reversed.
+
+Look up the status type from its code using this hash.
+
+=item %MONIT_MONITOR
+
+Contains the monitoring status's with corresponding codes.
+
+Probably I<%MONIT_MONITOR_REV> is of more use to you.
+
+=item %MONIT_MONITOR_REV
+
+As per I<%MONIT_MONITOR> but with keys and values reversed.
+
+Look up human readable monitoring status from its code using the status code.
+
+=back
+
+When brought in with:
+
  use Monit::HTTP ':constants';
 
 This module exports a set of constants:
 
-    TYPE_FILESYSTEM
-    TYPE_DIRECTORY
-    TYPE_FILE
-    TYPE_PROCESS
-    TYPE_HOST
-    TYPE_SYSTEM
-    TYPE_FIFO
+ TYPE_FILESYSTEM
+ TYPE_DIRECTORY
+ TYPE_FILE
+ TYPE_PROCESS
+ TYPE_HOST
+ TYPE_SYSTEM
+ TYPE_FIFO
 
-    ACTION_STOP
-    ACTION_START
-    ACTION_RESTART
-    ACTION_MONITOR
-    ACTION_UNMONITOR
+ ACTION_STOP
+ ACTION_START
+ ACTION_RESTART
+ ACTION_MONITOR
+ ACTION_UNMONITOR
 
 Use them as arguments for methods.
+
+B<Note:> the above are all from L<constant>, so they are sub's.
 
 =head1 METHODS
 
