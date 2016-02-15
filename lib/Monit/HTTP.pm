@@ -20,7 +20,43 @@ Monit::HTTP - an OOP interface to Monit.
 use HTTP::Tiny;
 use XML::Fast;
 
-use constant MONIT_TYPES => {
+our (
+    %MONIT_ACTIONS,
+    %MONIT_ACTIONS_REV,
+    %MONIT_STATUS,
+    %MONIT_STATUS_REV,
+    %MONIT_TYPES,
+    %MONIT_TYPES_REV,
+    %MONIT_MONITOR,
+    %MONIT_MONITOR_REV,
+);
+
+BEGIN {
+
+%MONIT_ACTIONS_REV = (
+    'stop'      => 'ACTION_STOP',
+    'start'     => 'ACTION_START',
+    'restart'   => 'ACTION_RESTART',
+    'monitor'   => 'ACTION_MONITOR',
+    'unmonitor' => 'ACTION_UNMONITOR',
+);
+%MONIT_ACTIONS = reverse %MONIT_ACTIONS_REV;
+
+%MONIT_MONITOR_REV = (
+    0 => 'off',
+    1 => 'monitored',
+    2 => 'initializing',
+);
+%MONIT_MONITOR = reverse %MONIT_MONITOR_REV;
+
+%MONIT_STATUS_REV = (
+    0   => 'Running',
+    32  => 'Connection Failed',
+    512 => 'Does not exist',
+);
+%MONIT_STATUS = reverse %MONIT_STATUS_REV;
+
+%MONIT_TYPES_REV = (
     0 => 'TYPE_FILESYSTEM',
     1 => 'TYPE_DIRECTORY',
     2 => 'TYPE_FILE',
@@ -29,58 +65,53 @@ use constant MONIT_TYPES => {
     5 => 'TYPE_SYSTEM',
     6 => 'TYPE_FIFO',
     7 => 'TYPE_STATUS',
-};
-
-use constant MONIT_ACTIONS => {
-    'stop'      => 'ACTION_STOP',
-    'start'     => 'ACTION_START',
-    'restart'   => 'ACTION_RESTART',
-    'monitor'   => 'ACTION_MONITOR',
-    'unmonitor' => 'ACTION_UNMONITOR',
-};
+);
+%MONIT_TYPES = reverse %MONIT_TYPES_REV;
+}
 
 # perl 5.10 has strange issues just going:
 #   use constant reverse %{ MONIT_TYPES() }
 # So work around it with do {}
-use constant do { my %foo = reverse( %{ MONIT_TYPES() } ); \%foo };
-use constant do { my %foo = reverse( %{ MONIT_ACTIONS() } ); \%foo };
+use constant do { my %foo = reverse( %MONIT_TYPES_REV ); \%foo };
+use constant do { my %foo = reverse( %MONIT_ACTIONS_REV ); \%foo };
 
 use Exporter;
 
+our %EXPORT_TAGS = (
+    constants => [qw/
+        ACTION_MONITOR
+        ACTION_RESTART
+        ACTION_START
+        ACTION_STOP
+        ACTION_UNMONITOR
+
+        TYPE_DIRECTORY
+        TYPE_FIFO
+        TYPE_FILE
+        TYPE_FILESYSTEM
+        TYPE_HOST
+        TYPE_PROCESS
+        TYPE_SYSTEM
+    /],
+
+    hashes => [qw/
+        %MONIT_ACTIONS
+        %MONIT_ACTIONS_REV
+        %MONIT_STATUS
+        %MONIT_STATUS_REV
+        %MONIT_TYPES
+        %MONIT_TYPES_REV
+        %MONIT_MONITOR
+        %MONIT_MONITOR_REV
+    /],
+);
+
 our @EXPORT_OK = (
-    'TYPE_FILESYSTEM',
-    'TYPE_DIRECTORY',
-    'TYPE_FILE',
-    'TYPE_PROCESS',
-    'TYPE_HOST',
-    'TYPE_SYSTEM',
-    'TYPE_FIFO',
-
-    'ACTION_STOP',
-    'ACTION_START',
-    'ACTION_RESTART',
-    'ACTION_MONITOR',
-    'ACTION_UNMONITOR',
-    );
-
-our %EXPORT_TAGS = ( constants => [
-    'TYPE_FILESYSTEM',
-    'TYPE_DIRECTORY',
-    'TYPE_FILE',
-    'TYPE_PROCESS',
-    'TYPE_HOST',
-    'TYPE_SYSTEM',
-    'TYPE_FIFO',
-
-    'ACTION_STOP',
-    'ACTION_START',
-    'ACTION_RESTART',
-    'ACTION_MONITOR',
-    'ACTION_UNMONITOR',
-    ]);
+    @{$EXPORT_TAGS{constants}},
+    @{$EXPORT_TAGS{hashes}},
+);
 
 our @ISA = qw(Exporter);
-our @EXPORT = qw(get_services command_run);
 
 =head1 SYNOPSIS
 
@@ -115,6 +146,8 @@ The module can be used also for performing actions like:
 
 =item * Start/Stop/Restart services
 
+Send a PR with an example!
+
 =item * Monitor/Unmonitor services
 
     use Monit::HTTP ':constants';
@@ -140,25 +173,95 @@ The module can be used also for performing actions like:
 
 When brought in with:
 
+ use Monit::HTTP ':hashes';
+
+This module will export these variables:
+
+=over 4
+
+=item %MONIT_ACTIONS
+
+Contains the following keys with corresponding codes:
+
+ ACTION_MONITOR
+ ACTION_RESTART
+ ACTION_START
+ ACTION_STOP
+ ACTION_UNMONITOR
+
+=item %MONIT_ACTIONS_REV
+
+As per I<%MONIT_ACTIONS> but with keys and values reversed.
+
+=item %MONIT_STATUS
+
+Contains possible service status's with corresponding codes.
+
+Probably I<%MONIT_STATUS_REV> is more useful to you.
+
+=item %MONIT_STATUS_REV
+
+As per I<%MONIT_STATUS> but with keys and values reversed.
+
+Look up human readable status from its code using the status code.
+
+=item %MONIT_TYPES
+
+Contains the following keys with corresponding codes.
+
+ TYPE_DIRECTORY
+ TYPE_FIFO
+ TYPE_FILE
+ TYPE_FILESYSTEM
+ TYPE_HOST
+ TYPE_PROCESS
+ TYPE_SYSTEM
+
+Use this hash when requesting certain service types
+
+=item %MONIT_TYPES_REV
+
+As per I<%MONIT_TYPES> but with keys and values reversed.
+
+Look up the status type from its code using this hash.
+
+=item %MONIT_MONITOR
+
+Contains the monitoring status's with corresponding codes.
+
+Probably I<%MONIT_MONITOR_REV> is of more use to you.
+
+=item %MONIT_MONITOR_REV
+
+As per I<%MONIT_MONITOR> but with keys and values reversed.
+
+Look up human readable monitoring status from its code using the status code.
+
+=back
+
+When brought in with:
+
  use Monit::HTTP ':constants';
 
 This module exports a set of constants:
 
-    TYPE_FILESYSTEM
-    TYPE_DIRECTORY
-    TYPE_FILE
-    TYPE_PROCESS
-    TYPE_HOST
-    TYPE_SYSTEM
-    TYPE_FIFO
+ TYPE_FILESYSTEM
+ TYPE_DIRECTORY
+ TYPE_FILE
+ TYPE_PROCESS
+ TYPE_HOST
+ TYPE_SYSTEM
+ TYPE_FIFO
 
-    ACTION_STOP
-    ACTION_START
-    ACTION_RESTART
-    ACTION_MONITOR
-    ACTION_UNMONITOR
+ ACTION_STOP
+ ACTION_START
+ ACTION_RESTART
+ ACTION_MONITOR
+ ACTION_UNMONITOR
 
 Use them as arguments for methods.
+
+B<Note:> the above are all from L<constant>, so they are sub's.
 
 =head1 METHODS
 
@@ -380,7 +483,7 @@ sub service_status {
 
             $status_href->{host} = $self->{hostname};
 
-            $status_href->{'type'} = MONIT_TYPES->{ $s->{'-type'} } || $s->{'-type'}
+            $status_href->{'type'} = $s->{'-type'}
                 if exists $s->{'-type'};
 
             for my $thing (qw/
