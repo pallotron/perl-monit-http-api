@@ -1,21 +1,11 @@
 #!/bin/false
+# ABSTRACT: An OOP interface to Monit.
+# PODNAME: Monit::HTTP
 
 use warnings;
 use strict;
 
 package Monit::HTTP;
-
-our $VERSION = '0.02';
-
-=pod
-
-=encoding utf-8
-
-=head1 NAME
-
-Monit::HTTP - an OOP interface to Monit.
-
-=cut
 
 use HTTP::Tiny;
 use XML::Fast;
@@ -112,6 +102,12 @@ our @EXPORT_OK = (
 );
 
 our @ISA = qw(Exporter);
+
+=pod
+
+=encoding utf-8
+
+=cut
 
 =head1 SYNOPSIS
 
@@ -306,7 +302,7 @@ sub new {
         $self->{password} ||= 'monit';
     }
 
-    $self->{ua} = HTTP::Tiny->new( agent => sprintf('Perl %s/%s',__PACKAGE__,$VERSION) );
+    $self->{ua} = HTTP::Tiny->new( agent => sprintf('Perl %s/%s',__PACKAGE__,$Monit::HTTP::VERSION) );
     $self->_generate_url;
 
     return $self
@@ -574,10 +570,6 @@ sub command_run {
     return 1
 }
 
-=head1 AUTHOR
-
-Angelo "pallotron" Failla, C<< <pallotron at freaknet.org> >>
-
 =head1 BUGS
 
 Please report any bugs or feature requests to C<bug-monit-http-api at rt.cpan.org>, or through
@@ -613,20 +605,7 @@ L<http://search.cpan.org/dist/Monit-HTTP-API>
 
 =back
 
-=head1 VERSION
-
-Version 0.02
-
 =head1 ACKNOWLEDGEMENTS
-
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright 2009 Angelo "pallotron" Failla, all rights reserved.
-
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
-
 
 =cut
 
